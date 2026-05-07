@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Quest - AI Powered Career Architect</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Import Map for Gemini SDK -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+
+    <style>
+        /* --- CORE VARIABLES & RESET --- */
+        :root {
+            --bg-dark: #0B0E14;
+            --bg-card: #151b2b;
+            --primary-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-green: #10b981;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --dark-overlay: rgba(11, 14, 20, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- LAYOUT UTILITIES --- */
+        .hidden {
+            display: none !important;
+        }
+
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* --- AUTH OVERLAY (Restyled) --- */
+        #auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-box h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-box p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary-grad);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        .auth-link {
+            color: #667eea;
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+
+        /* --- APP HEADER --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: transparent;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #8e2de2;
+        }
+
+        /* --- VIEWS --- */
+        .view-section {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- LANDING VIEW --- */
+        .hero-title {
+            font-size: 4rem;
+            line-height: 1.1;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .hero-title span {
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text {
+            color: var(--text-muted);
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+        }
+
+        .hero-btn {
+            background: var(--primary-grad);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(118, 75, 162, 0.5);
+            transition: all 0.3s;
+        }
+
+        .hero-btn:hover {
+            box-shadow: 0 0 40px rgba(118, 75, 162, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* --- DOMAINS VIEW --- */
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px;
+        }
+
+        .domain-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .domain-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(118, 75, 162, 0.5);
+        }
+
+        .domain-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .ai-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .design-icon {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+        }
+
+        .mkt-icon {
+            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            color: #333;
+        }
+
+        /* --- ROADMAP VIEW --- */
+        .roadmap-container {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh;
+        }
+
+        .roadmap-main {
+            background: var(--bg-card);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* SVG Path Styles */
+        svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .path-line {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 4;
+            stroke-dasharray: 10, 10;
+        }
+
+        .level-node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .level-node.active {
+            background: #10b981;
+            border-color: #059669;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .level-node:hover {
+            transform: scale(1.1);
+        }
+
+        /* Progress Circle */
+        .progress-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-green) var(--progress, 0%), rgba(255, 255, 255, 0.1) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .inner-circle {
+            width: 100px;
+            height: 100px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .chat-btn-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-grad);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+
+        .chat-btn-fab:hover {
+            transform: scale(1.1);
+        }
+
+        /* --- CHAT VIEW --- */
+        .chat-interface {
+            width: 100%;
+            max-width: 900px;
+            height: 80vh;
+            background: var(--bg-card);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-grad);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border-top-left-radius: 0;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--primary-grad);
+            color: white;
+            border-bottom-right-radius: 0;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 15px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 15px 25px;
+            color: white;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #10b981;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Typing Indicator */
+        .typing-dots {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Level Modal */
+        #level-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        /* --- COURSE VIEW STYLES (Integrated) --- */
+        /* Overrides for Fullscreen View */
+        #view-course {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-dark);
+            z-index: 2000;
+            display: flex;
+            /* Hidden by default via class */
+            flex-direction: column;
+            padding: 0;
+        }
+
+        .course-view-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .course-header-bar {
+            height: 70px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            flex-shrink: 0;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .course-sidebar {
+            width: 300px;
+            background-color: #0f131c;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h3 {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .module-list {
+            list-style: none;
+            padding: 20px;
+        }
+
+        .module-item {
+            margin-bottom: 15px;
+        }
+
+        .module-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .lesson-btn {
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 12px 15px;
+            border-radius: 10px;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .lesson-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .lesson-btn.active {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background-color: var(--bg-dark);
+        }
+
+        .video-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto 30px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .video-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .content-header {
+            max-width: 900px;
+            margin: 0 auto 20px;
+        }
+
+        .content-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .content-body {
+            max-width: 900px;
+            margin: 0 auto 50px;
+            line-height: 1.8;
+            color: #d1d5db;
+        }
+
+        .btn-complete {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+            margin-top: 20px;
+            float: right;
+        }
+
+        /* Locked state */
+        .level-node.locked {
+            background: #0f172a;
+            border-color: rgba(255, 255, 255, 0.08);
+            color: #475569;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .level-node.locked:hover {
+            transform: none;
+        }
+
+        .level-node.locked::after {
+            content: "🔒";
+            position: absolute;
+            bottom: -18px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Completed state */
+        .level-node.completed {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-color: #16a34a;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+        }
+
+        /* Stars under node */
+        .level-stars {
+            position: absolute;
+            bottom: -28px;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: gold;
+        }
+
+        /* Quiz Modal Overlay */
+        #quiz-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #quiz-modal .modal-content {
+            background: #1e293b;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 50px rgba(124, 58, 237, 0.2);
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            text-align: center;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        #quiz-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #a78bfa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #quiz-question {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            color: #e2e8f0;
+        }
+
+        #quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #quiz-options button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            padding: 18px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #quiz-options button:hover {
+            background: rgba(124, 58, 237, 0.15);
+            border-color: rgba(124, 58, 237, 0.5);
+            transform: translateY(-2px);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #quiz-options button:active {
+            transform: scale(0.98);
+        }
+
+        /* Quiz Results Styling */
+        #quiz-score-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        #quiz-stars-display {
+            font-size: 3rem;
+            margin: 15px 0;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        #quiz-feedback {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- AUTH OVERLAY -->
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <div id="login-view">
+                <h2>Welcome Back</h2>
+                <p>Log in to continue your quest</p>
+                <div class="form-group">
+                    <input type="email" id="loginEmail" placeholder="Email">
+                    <input type="password" id="loginPassword" placeholder="Password">
+                </div>
+                <button class="btn-primary" id="loginBtn">Log In</button>
+                <div class="auth-link" id="showSignup">Don't have an account? Sign up</div>
+            </div>
+
+            <div id="signup-view" class="hidden">
+                <h2>Start Journey</h2>
+                <p>Create your adventurer profile</p>
+                <div class="form-group">
+                    <input type="text" id="signupName" placeholder="Adventurer Name">
+                    <input type="email" id="signupEmail" placeholder="Email">
+                    <input type="password" id="signupPassword" placeholder="Password">
+                </div>
+                <button class="btn-primary" id="signupBtn">Create Account</button>
+                <div class="auth-link" id="showLogin">Already have an account? Log in</div>
+            </div>
+            <p id="auth-msg" style="margin-top: 15px; font-size: 0.9rem; color: #ef4444; height: 20px;"></p>
+        </div>
+    </div>
+
+    <!-- INSTANT: Hide login if already logged in (runs before any other script) -->
+    <script>
+        if (localStorage.getItem('authToken') && localStorage.getItem('currentUser')) {
+            document.getElementById('auth-overlay').style.display = 'none';
+        }
+    </script>
+
+    <!-- MAIN APP STRUCTURE -->
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-rocket"></i> Career Quest
+        </div>
+        <nav class="nav-links" style="display: flex; gap: 20px; align-items: center;">
+            <a href="index.html" style="color: #94a3b8; text-decoration: none; transition: color 0.3s;">
+                <i class="fas fa-home"></i> Home
+            </a>
+
+            <a href="chatbot.html" style="color: #94a3b8; text-decoration: none; transition: color 0.3s;">
+                <i class="fas fa-comments"></i> AI Mentor
+            </a>
+            <a href="profile.html" style="color: #94a3b8; text-decoration: none; transition: color 0.3s;">
+                <i class="fas fa-user"></i> Profile
+            </a>
+        </nav>
+        <div class="user-info">
+            <span id="nav-user-name">Adventurer</span>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- 4. COURSE VIEW (Integrated) -->
+        <section id="view-course" class="view-section hidden">
+            <div class="course-view-container">
+                <header class="course-header-bar">
+                    <button class="back-btn" onclick="app.switchView('roadmap')">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Roadmap
+                    </button>
+                    <div class="course-title" id="course-header-title">Loading...</div>
+                    <div style="width: 100px;"></div>
+                </header>
+
+                <div style="flex: 1; display: flex; overflow: hidden;">
+                    <aside class="course-sidebar">
+                        <div class="sidebar-header">
+                            <h3>Current Track</h3>
+                            <h2 id="sidebar-course-name">...</h2>
+                        </div>
+                        <ul class="module-list" id="module-list-container"></ul>
+                    </aside>
+
+                    <div class="content-area">
+                        <div id="lesson-content"></div>
+                        <div style="max-width: 900px; margin: 0 auto; overflow: hidden; padding-bottom: 50px;">
+                            <button class="btn-complete" onclick="app.markComplete()">
+                                Complete Lesson <i class="fa-solid fa-check" style="margin-left: 8px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 1. LANDING VIEW -->
+        <section id="view-landing" class="view-section">
+            <h1 class="hero-title">Level Up Your Skills<br><span>One Quest at a Time</span></h1>
+            <p class="hero-text">Turn learning into an adventure! Follow gamified roadmaps, complete exciting levels,
+                and unlock achievements on your path to career mastery.</p>
+            <button class="hero-btn" onclick="app.switchView('domains')">
+                <i class="fa-solid fa-location-arrow"></i> Start Your Journey
+            </button>
+            <br>
+            <button class="hero-btn" onclick="window.location.href='basic questions.html'"
+                style="background: transparent; border: 2px solid #a5b4fc; box-shadow: none; margin-top: 20px;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Not sure? Find Your Path
+            </button>
+        </section>
+
+        <!-- 2. DOMAINS VIEW -->
+        <section id="view-domains" class="view-section hidden">
+            <h2 class="hero-title" style="font-size: 2.5rem; margin-bottom: 50px;">Choose Your Domain</h2>
+            <div class="domains-grid">
+                <!-- AI Card -->
+                <div class="domain-card" onclick="app.selectDomain('AI & Data')">
+                    <div class="domain-icon ai-icon"><i class="fa-solid fa-brain"></i></div>
+                    <h3>Artificial Intelligence</h3>
+                    <p style="color:#94a3b8; margin: 10px 0;">Master machine learning, deep learning, and AI
+                        applications.</p>
+                    <span style="color: #667eea; font-weight: 500;">Start Journey -></span>
+                </div>
+                <!-- Design Card -->
+                <div class="domain-card" onclick="app.selectDomain('Design')">
+                    <div class="domain-icon design-icon"><i class="fa-solid fa-pen-nib"></i></div>
+                    <h3>Design</h3>
+                    <p style="color:#94a3b8; margin: 10px 0;">Learn UI/UX design, visual design, and user research.</p>
+                    <span style="color: #ff9a9e; font-weight: 500;">Start Journey -></span>
+                </div>
+                <!-- Marketing Card -->
+                <div class="domain-card" onclick="app.selectDomain('Marketing')">
+                    <div class="domain-icon mkt-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <h3>Marketing</h3>
+                    <p style="color:#94a3b8; margin: 10px 0;">Explore digital marketing, content strategy, and brand
+                        building.</p>
+                    <span style="color: #84fab0; font-weight: 500;">Start Journey -></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. ROADMAP VIEW -->
+        <section id="view-roadmap" class="view-section hidden">
+            <div
+                style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="btn-secondary" style="width: auto; padding: 5px 15px;"
+                    onclick="app.switchView('domains')">← Back</button>
+                <h2 id="roadmap-title">Roadmap</h2>
+            </div>
+
+            <div class="roadmap-container">
+                <div class="roadmap-main">
+                    <!-- SVG Path for the Winding Road -->
+                    <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
+                        <path d="M50,400 C150,400 200,100 350,100 C500,100 550,400 750,350" class="path-line" />
+                    </svg>
+
+                    <!-- Interactive Nodes (Positioned roughly along the path) -->
+                    <div class="level-node active" id="node-1" style="left: 40px; top: 370px;"
+                        onclick="app.openLevel(1)">
+                        1
+                        <div class="level-stars" id="stars-1"></div>
+                    </div>
+
+                    <div class="level-node locked" id="node-2" style="left: 200px; top: 250px;">
+                        2
+                        <div class="level-stars" id="stars-2"></div>
+                    </div>
+
+                    <div class="level-node locked" id="node-3" style="left: 320px; top: 70px;">
+                        3
+                        <div class="level-stars" id="stars-3"></div>
+                    </div>
+
+                    <div class="level-node locked" id="node-4" style="left: 500px; top: 200px;">
+                        4
+                        <div class="level-stars" id="stars-4"></div>
+                    </div>
+
+                    <div class="level-node locked" id="node-5" style="left: 700px; top: 320px;">
+                        5
+                        <div class="level-stars" id="stars-5"></div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h3>Your Progress</h3>
+                    <br>
+                    <div class="progress-circle" id="progress-ring">
+                        <div class="inner-circle" id="progress-text">20%</div>
+                    </div>
+                    <p style="color: var(--text-muted); text-align: center;">Keep going! You're doing great.</p>
+                    <div style="margin-top: auto; width: 100%;">
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <span><i class="fa-solid fa-fire" style="color: #f59e0b;"></i> Streak</span>
+                            <span>3 Days</span>
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> XP</span>
+                            <span id="xp-display">150</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Action Button for Chat -->
+            <div class="chat-btn-fab" onclick="app.switchView('chat')">
+                <i class="fa-solid fa-comment-dots"></i>
+            </div>
+        </section>
+
+        <!-- 4. CHAT VIEW -->
+        <section id="view-chat" class="view-section hidden">
+            <div style="width: 100%; max-width: 900px; margin-bottom: 15px;">
+                <button class="btn-secondary" style="width: auto; padding: 5px 15px;"
+                    onclick="app.switchView('roadmap')">← Back to Roadmap</button>
+            </div>
+
+            <div class="chat-interface">
+                <div class="chat-header">
+                    <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div>
+                        <h3 style="margin: 0;">Career Counselor AI</h3>
+                        <span style="font-size: 0.8rem; color: #10b981;">● Online</span>
+                    </div>
+                </div>
+
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Messages will appear here -->
+                    <div class="message ai">
+                        Hello! I'm your AI Career Counselor. I can help you with roadmap advice, skill resources, or
+                        career questions. Ask me anything!
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" class="chat-input"
+                        placeholder="Ask about skills, jobs, or roadmaps...">
+                    <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- LEVEL MODAL -->
+    <div id="level-modal" class="hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">Level 1</h2>
+            <p id="modal-desc" style="color: #94a3b8; margin: 20px 0;">Foundation concepts and basic syntax.</p>
+            <div id="modal-checklist"
+                style="text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <!-- Dynamic Content will be loaded here -->
+            </div>
+            <button class="btn-primary" onclick="app.startLevel()">Start Learning</button>
+            <button class="btn-secondary" onclick="app.completeLevel()">Complete Level (+50 XP)</button>
+            <button class="btn-secondary"
+                onclick="document.getElementById('level-modal').classList.add('hidden')">Close</button>
+        </div>
+    </div>
+
+    <!-- QUIZ MODAL -->
+    <div id="quiz-modal" class="hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="quiz-title">Quiz Time!</h2>
+            <div id="quiz-container">
+                <!-- Question and Options go here -->
+                <p id="quiz-question" style="font-size: 1.2rem; margin-bottom: 20px;">Question text...</p>
+                <div id="quiz-options" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Buttons injected by JS -->
+                </div>
+            </div>
+
+            <div id="quiz-results" class="hidden" style="text-align: center;">
+                <h3 id="quiz-score-title" style="color: #4ade80;">Score: 5/5</h3>
+                <div id="quiz-stars-display" style="font-size: 2rem; color: gold; margin: 10px 0;">★★★</div>
+                <p id="quiz-feedback">Perfect Score! You're a pro.</p>
+                <button class="btn-primary" onclick="app.finalizeLevel()">Claim Rewards & Continue</button>
+            </div>
+        </div>
+    </div>
+    <!-- FIREBASE & APP LOGIC -->
+    <!-- Load Authentication Module First -->
+    <script src="auth.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        /* --- CONFIGURATION --- */
+        const CONFIG = {
+            // New Key from index1.html
+            apiKey: "AIzaSyB8wDt0tnYap2BvtQ8Ioe4uwVWwYzQguc0",
+            firebase: {
+                apiKey: "AIzaSyBiFvR6lZq1XnA-d1ZU5_Ob4Iet4r6OBEQ",
+                authDomain: "innovation-project-75bd3.firebaseapp.com",
+                projectId: "innovation-project-75bd3"
+            },
+            model: "gemini-1.5-flash"
+        };
+
+        // ============= INITIALIZATION =============
+        // Init Firebase
+        const fbApp = initializeApp(CONFIG.firebase);
+        const auth = getAuth(fbApp);
+
+        // Initialize Auth Service (runs before app)
+        authService.auth = auth;
+
+        /* --- STATE --- */
+        const state = {
+            user: null,
+            domain: "General",
+            level: 1, // Current global or effective level for the session
+            xp: 150,
+            chatHistory: [],
+            // Persist progress per domain
+            domainProgress: {
+                "AI & Data": 1,
+                "Design": 1,
+                "Marketing": 1
+            },
+            domainStars: {
+                "AI & Data": {},
+                "Design": {},
+                "Marketing": {}
+            }
+        };
+
+        /* --- COURSE DATA (Verified & Expanded) --- */
+        const ALL_COURSES = {
+            "AI & Data": [
+                {
+                    module: "Module 1: Foundations",
+                    lessons: [
+                        {
+                            title: "What is AI?",
+                            tag: "Level 1",
+                            videoId: "ad79nYk2keg", // Simpson - Intro to AI
+                            description: `<p><strong>Level 1:</strong> Start your journey by understanding what Artificial Intelligence actually is. Learn the difference between Narrow AI, General AI, and Super AI.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 2: Core Concepts",
+                    lessons: [
+                        {
+                            title: "Machine Learning Basics",
+                            tag: "Level 2",
+                            videoId: "nKW8Ndu7Mjw", // Google Cloud Tech
+                            description: `<p><strong>Level 2:</strong> Dive into Machine Learning. Understand supervised vs. unsupervised learning and how algorithms learn from data.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 3: Neural Networks",
+                    lessons: [
+                        {
+                            title: "Neural Networks Explained",
+                            tag: "Level 3",
+                            videoId: "aircAruvnKk", // 3Blue1Brown
+                            description: `<p><strong>Level 3:</strong> Uncover the "brain" of AI. See how neural networks mimic the human brain to recognize patterns and solve complex problems.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 4: Programming AI",
+                    lessons: [
+                        {
+                            title: "Python for Data Science",
+                            tag: "Level 4",
+                            videoId: "rfscVS0vtbw", // FreeCodeCamp
+                            description: `<p><strong>Level 4:</strong> Get hands-on with Python. This crash course covers the essential libraries you need: Pandas, NumPy, and Matplotlib.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 5: Future Tech",
+                    lessons: [
+                        {
+                            title: "Generative AI & LLMs",
+                            tag: "Level 5",
+                            videoId: "G2fqAlgmoPo", // IBM Technology
+                            description: `<p><strong>Level 5:</strong> The cutting edge. Learn how Large Language Models like GPT work and the future of Generative AI.</p>`
+                        }
+                    ]
+                }
+            ],
+            "Design": [
+                {
+                    module: "Module 1: Design Thinking",
+                    lessons: [
+                        {
+                            title: "What is UX Design?",
+                            tag: "Level 1",
+                            videoId: "c9Wg6Cb_YlU", // AJ&Smart
+                            description: `<p><strong>Level 1:</strong> Design is not just how it looks, but how it works. Learn the 5 stages of the Design Thinking process.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 2: Visual Foundations",
+                    lessons: [
+                        {
+                            title: "Visual Hierarchy",
+                            tag: "Level 2",
+                            videoId: "WwroSqXjrLM", // Simplilearn - Visual Hierarchy (Verified)
+                            description: `<p><strong>Level 2:</strong> Direct the user's eye. Learn how to use size, color, and contrast to create clear and effective layouts.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 3: Color Masterclass",
+                    lessons: [
+                        {
+                            title: "Color Theory Basics",
+                            tag: "Level 3",
+                            videoId: "_2LLXnUdUIc", // GCFLearnFree
+                            description: `<p><strong>Level 3:</strong> Colors tell a story. Understand the color wheel, harmony, and the psychology behind color choices.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 4: Typography",
+                    lessons: [
+                        {
+                            title: "Typography Rules",
+                            tag: "Level 4",
+                            videoId: "sByzHoiYFX0", // GCFLearnFree (Confirmed)
+                            description: `<p><strong>Level 4:</strong> Type is everywhere. Master the art of choosing and pairing fonts to improve readability and aesthetics.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 5: Prototyping",
+                    lessons: [
+                        {
+                            title: "Figma for Beginners",
+                            tag: "Level 5",
+                            videoId: "L2wNq0iRk3c", // Kevin Stratvert - Figma 2024 (Verified)
+                            description: `<p><strong>Level 5:</strong> Bring your designs to life. A complete crash course on building interactive prototypes in Figma.</p>`
+                        }
+                    ]
+                }
+            ],
+            "Marketing": [
+                {
+                    module: "Module 1: The Landscape",
+                    lessons: [
+                        {
+                            title: "Digital Marketing 101",
+                            tag: "Level 1",
+                            videoId: "ZVuHLPl69mM", // Simplilearn Digital Marketing (Verified)
+                            description: `<p><strong>Level 1:</strong> An overview of the digital marketing ecosystem: SEO, social media, email, and content marketing.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 2: Organic Growth",
+                    lessons: [
+                        {
+                            title: "SEO Fundamentals",
+                            tag: "Level 2",
+                            videoId: "DvwS7cV9GmQ", // Ahrefs
+                            description: `<p><strong>Level 2:</strong> Master Google. Learn how search engines work and how to optimize your content to rank #1.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 3: Social Strategy",
+                    lessons: [
+                        {
+                            title: "Social Media Strategy",
+                            tag: "Level 3",
+                            videoId: "UrzYi6DyGE4", // HubSpot Social Media (Verified)
+                            description: `<p><strong>Level 3:</strong> Build a brand. How to create a content calendar and engage with your audience on platforms like Instagram and LinkedIn.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 4: Content",
+                    lessons: [
+                        {
+                            title: "Content Marketing",
+                            tag: "Level 4",
+                            videoId: "Q_lySNxCag0", // Neil Patel - SEO Unlocked (Verified)
+                            description: `<p><strong>Level 4:</strong> Content is King. Learn how to create valuable content that attracts and retains a clearly defined audience.</p>`
+                        }
+                    ]
+                },
+                {
+                    module: "Module 5: Retention",
+                    lessons: [
+                        {
+                            title: "Email Marketing",
+                            tag: "Level 5",
+                            videoId: "DvwUgqX3ZF4", // Simplilearn - Email Marketing (Verified)
+                            description: `<p><strong>Level 5:</strong> The highest ROI channel. Learn how to build an email list and run automated campaigns that convert.</p>`
+                        }
+                    ]
+                }
+            ]
+        };
+
+        /* --- QUIZ DATA (5 Questions per Level) --- */
+        const QUIZ_DATA = {
+            "AI & Data": [
+                // Level 1: What is AI?
+                [
+                    { q: "What distinguishes General AI from Narrow AI?", options: ["General AI performs specific tasks like humans", "General AI can allow machines to perform any intellectual task", "Narrow AI is superior to General AI"], a: 1 },
+                    { q: "Which tool is an example of Narrow AI?", options: ["A human brain", "A self-aware robot", "Siri or Alexa"], a: 2 },
+                    { q: "What is the primary goal of AI?", options: ["To replace humans entirely", "To simulate human intelligence in machines", "To create video games"], a: 1 },
+                    { q: "Super AI refers to:", options: ["AI that exceeds human intelligence", "AI used in supermarkets", "AI that flies"], a: 0 },
+                    { q: "Which industry uses AI?", options: ["Only Tech", "Healthcare, Finance, & Auto", "None"], a: 1 }
+                ],
+                // Level 2: Machine Learning Basics
+                [
+                    { q: "What is Supervised Learning?", options: ["Training with labeled data", "Training with no data", "Letting the AI guess randomly"], a: 0 },
+                    { q: "Which is a type of Machine Learning?", options: ["Unsupervised Learning", "Automated Typing", "Manual Entry"], a: 0 },
+                    { q: "What is a 'Dataset'?", options: ["A computer virus", "A collection of data for training", "A hard drive"], a: 1 },
+                    { q: "In ML, what is a 'Feature'?", options: ["A bug", "An input variable or attribute", "The output result"], a: 1 },
+                    { q: "What is Overfitting?", options: ["When the model fits the training data too well but fails on new data", "When the clothes don't fit", "When the model is too simple"], a: 0 }
+                ],
+                // Level 3: Neural Networks
+                [
+                    { q: "Neural Networks are inspired by:", options: ["The respiratory system", "The human brain", "Solar systems"], a: 1 },
+                    { q: "What connects neurons in a network?", options: ["Wires", "Weights", "String"], a: 1 },
+                    { q: "What is a 'Hidden Layer'?", options: ["A secret menu", "Layers between input and output", "The final result"], a: 1 },
+                    { q: "Deep Learning uses:", options: ["Single layer networks", "Multi-layered neural networks", "No networks"], a: 1 },
+                    { q: "What is Backpropagation?", options: ["Moving backwards physically", "Algorithm to adjust weights to minimize error", "Deleting data"], a: 1 }
+                ],
+                // Level 4: Python for Data Science
+                [
+                    { q: "Which library is used for data manipulation?", options: ["Pandas", "PyGame", "Requests"], a: 0 },
+                    { q: "What does NumPy handle?", options: ["Websites", "Large multi-dimensional arrays", "Databases"], a: 1 },
+                    { q: "Which library creates charts?", options: ["Matplotlib", "Math", "Sys"], a: 0 },
+                    { q: "How do you install a Python library?", options: ["pip install package_name", "download.exe", "get library"], a: 0 },
+                    { q: "What is a Jupyter Notebook?", options: ["A physical book", "An interactive coding environment", "A laptop brand"], a: 1 }
+                ],
+                // Level 5: Generative AI
+                [
+                    { q: "What is an LLM?", options: ["Long Learning Mode", "Large Language Model", "Low Latency Machine"], a: 1 },
+                    { q: "ChatGPT is an example of:", options: ["Generative AI", "Discriminative AI", "Narrow AI"], a: 0 },
+                    { q: "What is a 'Prompt'?", options: ["Being on time", "Input text given to the model", "The output"], a: 1 },
+                    { q: "Generative AI can create:", options: ["Only text", "Text, Images, and Audio", "Only Numbers"], a: 1 },
+                    { q: "What is a Transformer model?", options: ["A car robot", "A deep learning architecture for NLP", "An electrical device"], a: 1 }
+                ]
+            ],
+            "Design": [
+                // Level 1: UX Design
+                [
+                    { q: "What does UX stand for?", options: ["User Xenophobia", "User Experience", "Utility Xylophone"], a: 1 },
+                    { q: "Which is the first stage of Design Thinking?", options: ["Prototype", "Empathize", "Test"], a: 1 },
+                    { q: "What is a Wireframe?", options: ["A finished design", "A skeletal blueprint of a layout", "A cable management tool"], a: 1 },
+                    { q: "Good UX focuses on:", options: ["The user's needs", "The designer's ego", "Using many colors"], a: 0 },
+                    { q: "What is Usability Testing?", options: ["Checking code", "Observing users using the product", "Stressing the server"], a: 1 }
+                ],
+                // Level 2: Visual Hierarchy
+                [
+                    { q: "What is Visual Hierarchy?", options: ["Making everything huge", "Arranging elements to show importance", " Alphabetical sorting"], a: 1 },
+                    { q: "Which element draws most attention?", options: ["Small grey text", "Large bold headline", "Footer"], a: 1 },
+                    { q: "How does whitespace help?", options: ["It wastes space", "It improves readability and focus", "It makes it look unfinished"], a: 1 },
+                    { q: "The 'Z-Pattern' describes:", options: ["How users verify code", "How users scan a page", "Sleeping users"], a: 1 },
+                    { q: "Contrast is used to:", options: ["Hide elements", "Create distinction and focus", "Blend everything"], a: 1 }
+                ],
+                // Level 3: Color Theory
+                [
+                    { q: "The primary colors are:", options: ["Red, Green, Blue", "Red, Yellow, Blue", "Cyan, Magenta, Yellow"], a: 1 },
+                    { q: "Blue often equates to:", options: ["Danger", "Trust and Security", "Hunger"], a: 1 },
+                    { q: "Complementary colors are:", options: ["Next to each other", "Opposite on the color wheel", "Same shade"], a: 1 },
+                    { q: "What is Hue?", options: ["The brightness", "The property of the color itself", "The transparency"], a: 1 },
+                    { q: "Monochromatic means:", options: ["Many colors", "One color with variations", "Black and white"], a: 1 }
+                ],
+                // Level 4: Typography
+                [
+                    { q: "Serif fonts have:", options: ["Decorative strokes at ends", "No decorative strokes", "Only capital letters"], a: 0 },
+                    { q: "Sans-serif is typically considered:", options: ["Modern and clean", "Traditional and old", "Hard to read"], a: 0 },
+                    { q: "Kerning refers to:", options: ["Line spacing", "Space between individual characters", "Font weight"], a: 1 },
+                    { q: "What is a 'Font Family'?", options: ["A group of related typefaces", "The designer's relatives", "A specific size"], a: 0 },
+                    { q: "Hierarchy in type is achieved by:", options: ["Size, Weight, and Color", "Using only one size", "Randomness"], a: 0 }
+                ],
+                // Level 5: Figma
+                [
+                    { q: "Figma is best known for:", options: ["Photo editing", "Real-time collaborative interface design", "3D modeling"], a: 1 },
+                    { q: "What is a 'Frame' in Figma?", options: ["A picture border", "A container for elements (artboard)", "A video"], a: 1 },
+                    { q: "Components allow you to:", options: ["Write code", "Reuse elements across designs", "Export PDF"], a: 1 },
+                    { q: "Prototype mode allows:", options: ["Editing colors", "Defining interactions and flows", "Database management"], a: 1 },
+                    { q: "Auto Layout helps with:", options: ["Driving a car", "Responsive resizing of elements", "Automatic saving"], a: 1 }
+                ]
+            ],
+            "Marketing": [
+                // Level 1: Digital Mkt 101
+                [
+                    { q: "What is Digital Marketing?", options: ["Selling computers", "Marketing using digital channels", " Robo-calling"], a: 1 },
+                    { q: "Which is NOT a digital channel?", options: ["Social Media", "Email", "Billboard"], a: 2 },
+                    { q: "What does ROI stand for?", options: ["Rate of Interest", "Return on Investment", "Risk of Inflation"], a: 1 },
+                    { q: "B2B means:", options: ["Business to Boss", "Business to Business", "Back to Back"], a: 1 },
+                    { q: "A 'Lead' is:", options: ["A metal", "A potential customer", "The boss"], a: 1 }
+                ],
+                // Level 2: SEO
+                [
+                    { q: "SEO stands for:", options: ["Search Engine Optimization", "Social Engagement Online", "Site Error Output"], a: 0 },
+                    { q: "What are Keywords?", options: ["Passwords", "Terms users search for", "Code variables"], a: 1 },
+                    { q: "On-page SEO refers to:", options: ["Optimizing content on your site", "Getting backlinks", "Social posts"], a: 0 },
+                    { q: "Why is site speed important?", options: ["It isn't", "It improves user experience and ranking", "Only for developers"], a: 1 },
+                    { q: "What is a Backlink?", options: ["A link from another site to yours", "A menu button", "A footer link"], a: 0 }
+                ],
+                // Level 3: Social Media
+                [
+                    { q: "What is the goal of a Content Calendar?", options: ["To know the date", "Consistent posting schedule", "To look busy"], a: 1 },
+                    { q: "Engagement includes:", options: ["Scrolling", "Likes, Comments, Shares", "Ignoring"], a: 1 },
+                    { q: "LinkedIn is best for:", options: ["Viral dances", "Professional networking B2B", "Gaming streams"], a: 1 },
+                    { q: "Influencer marketing uses:", options: ["Robots", "People with large followings", "Newspapers"], a: 1 },
+                    { q: "Analytics help you:", options: ["Guess what works", "Measure performance and adjust", "Ignore users"], a: 1 }
+                ],
+                // Level 4: Content
+                [
+                    { q: "Content Marketing acts to:", options: ["Directly sell aggressively", "Attract and engage an audience", "Trick users"], a: 1 },
+                    { q: "A CTA is:", options: ["Call to Action", "Call the Agency", "Customer Test Area"], a: 0 },
+                    { q: "Evergreen content is:", options: ["About nature", "Relevant for a long time", "News only"], a: 1 },
+                    { q: "A Blog Post is:", options: ["A type of content", "A social media", "A virus"], a: 0 },
+                    { q: "User-Generated Content (UGC) comes from:", options: ["The company", "The customers/fans", "The competitors"], a: 1 }
+                ],
+                // Level 5: Email
+                [
+                    { q: "An Open Rate is:", options: ["How fast you open emails", "% of people who open your email", "The price of email"], a: 1 },
+                    { q: "Segmentation means:", options: ["Cutting the email", "Dividing your list into targeted groups", "Sending to everyone"], a: 1 },
+                    { q: "Spamming is:", options: ["Good strategy", "Sending unsolicited bulk emails", "A type of meat"], a: 1 },
+                    { q: "Personalization in email uses:", options: ["The recipient's name/data", "Random words", "Generic greetings only"], a: 0 },
+                    { q: "The Subject Line's goal is:", options: ["To be boring", "To get the recipient to open", "To end the email"], a: 1 }
+                ]
+            ]
+        };
+
+        /* --- APP CONTROLLER --- */
+        window.app = {
+            startLevel: function () {
+                document.getElementById('level-modal').classList.add('hidden');
+                const domain = state.domain || 'AI & Data';
+
+                // Load the course structure
+                this.loadCourse(domain);
+
+                // Advance to the specific level selected
+                // (Level 1 = Index 0, Level 5 = Index 4)
+                const targetIndex = (state.currentInteractionLevel || 1) - 1;
+                this.loadLesson(targetIndex);
+
+                this.switchView('course');
+            },
+
+            loadCourse: function (domain) {
+                // Set Headers
+                document.getElementById('course-header-title').textContent = `${domain}: Level `;
+                document.getElementById('sidebar-course-name').textContent = "Foundations";
+
+                // Load Data
+                const courseData = ALL_COURSES[domain] || ALL_COURSES['AI & Data'];
+                const sidebarContainer = document.getElementById('module-list-container');
+                sidebarContainer.innerHTML = '';
+                state.flattenedLessons = []; // Store in state
+
+                courseData.forEach((mod) => {
+                    const li = document.createElement('li');
+                    li.className = 'module-item';
+                    let lessonsHtml = '';
+
+                    mod.lessons.forEach((lesson) => {
+                        const globalIndex = state.flattenedLessons.length;
+                        state.flattenedLessons.push(lesson);
+                        lessonsHtml += `
+                            <button class="lesson-btn" id="btn-${globalIndex}" onclick="app.loadLesson(${globalIndex})">
+                                <i class="fa-solid ${lesson.videoId ? 'fa-circle-play' : 'fa-file-lines'} lesson-icon"></i>
+                                ${lesson.title}
+                            </button>
+                        `;
+                    });
+
+                    li.innerHTML = `<div class="module-title">${mod.module}</div>${lessonsHtml}`;
+                    sidebarContainer.appendChild(li);
+                });
+
+                // Load first
+                this.loadLesson(0);
+            },
+
+            loadLesson: function (index) {
+                state.currentLessonIndex = index;
+                const lesson = state.flattenedLessons[index];
+
+                // UI Active State
+                document.querySelectorAll('.lesson-btn').forEach(btn => btn.classList.remove('active'));
+                const activeBtn = document.getElementById(`btn-${index}`);
+                if (activeBtn) activeBtn.classList.add('active');
+
+                // Video HTML - Using clickable thumbnail for guaranteed compatibility
+                const videoHTML = lesson.videoId ? `
+                    <div class="video-container" style="position: relative; cursor: pointer;" onclick="window.open('https://www.youtube.com/watch?v=${lesson.videoId}', '_blank')">
+                        <img 
+                            src="https://img.youtube.com/vi/${lesson.videoId}/maxresdefault.jpg" 
+                            alt="${lesson.title}" 
+                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 15px;"
+                            onerror="this.src='https://img.youtube.com/vi/${lesson.videoId}/hqdefault.jpg'"
+                        />
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                                    width: 80px; height: 80px; background: rgba(255,0,0,0.9); border-radius: 50%; 
+                                    display: flex; align-items: center; justify-content: center; 
+                                    box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: transform 0.3s;">
+                            <i class="fa-solid fa-play" style="color: white; font-size: 2rem; margin-left: 5px;"></i>
+                        </div>
+                        <div style="position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.7); 
+                                    padding: 8px 15px; border-radius: 5px; font-size: 0.9rem;">
+                            <i class="fa-brands fa-youtube" style="color: #ff0000; margin-right: 8px;"></i>
+                            Click to Watch on YouTube
+                        </div>
+                    </div>
+                ` : '';
+
+                // Render Content
+                const html = `
+                    ${videoHTML}
+                    <div class="content-header">
+                        <span class="tag">${lesson.tag}</span>
+                        <h1>${lesson.title}</h1>
+                    </div>
+                    <div class="content-body">
+                        ${lesson.description}
+                    </div>
+                `;
+                document.getElementById('lesson-content').innerHTML = html;
+            },
+
+            markComplete: function () {
+                const btn = document.querySelector('.btn-complete');
+                btn.innerHTML = 'Starting Quiz...';
+
+                setTimeout(() => {
+                    this.startQuiz();
+                    // Reset Button
+                    btn.innerHTML = 'Complete Lesson <i class="fa-solid fa-check" style="margin-left: 8px;"></i>';
+                }, 500);
+            },
+
+            /**
+             * ============= APP INITIALIZATION =============
+             * 
+             * FLOW:
+             * 1. Initialize auth service to restore session from localStorage
+             * 2. If user is already logged in, hide auth overlay and load app
+             * 3. If user is not logged in, show auth overlay to prompt login
+             * 4. Handle URL parameters for domain selection
+             */
+            init: async function () {
+                try {
+                    console.log("🚀 Starting app initialization...");
+
+                    // IMMEDIATE: If already logged in (session restored by auth.js constructor),
+                    // hide login overlay RIGHT NOW before any async operations
+                    if (authService.isAuthenticated()) {
+                        const user = authService.getCurrentUser();
+                        state.user = user;
+                        document.getElementById('nav-user-name').textContent = user.displayName || 'User';
+                        const authOverlay = document.getElementById('auth-overlay');
+                        authOverlay.style.display = 'none';
+                        authOverlay.classList.add('hidden');
+                        console.log("✅ Session restored instantly - no login flash");
+                    }
+
+                    // STEP 1: Initialize authentication (connects to Firebase)
+                    const isUserLoggedIn = await authService.initializeAuth(auth);
+
+                    // STEP 2: If user was already authenticated, restore session
+                    if (isUserLoggedIn) {
+                        const user = authService.getCurrentUser();
+                        state.user = user;
+                        document.getElementById('nav-user-name').textContent = user.displayName || 'User';
+
+                        // Hide auth overlay immediately
+                        const authOverlay = document.getElementById('auth-overlay');
+                        authOverlay.style.display = 'none';
+                        authOverlay.classList.add('hidden');
+
+                        console.log("✅ User session restored!");
+                    } else {
+                        // STEP 3: Only show login if there is NO session at all
+                        // (localStorage might have a valid session even if Firebase says no)
+                        if (!localStorage.getItem('authToken') || !localStorage.getItem('currentUser')) {
+                            const authOverlay = document.getElementById('auth-overlay');
+                            authOverlay.style.display = 'flex';
+                            authOverlay.classList.remove('hidden');
+                            console.log("🔐 Showing login screen...");
+                        }
+                    }
+
+                    // STEP 4: Bind UI events
+                    this.bindEvents();
+
+                    // STEP 5: Check for URL params (from Find Your Path)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const domainParam = urlParams.get('domain');
+
+                    if (domainParam && isUserLoggedIn) {
+                        // User is logged in and domain is specified
+                        console.log("🎯 Found domain param:", domainParam);
+                        state.domain = domainParam;
+                        this.switchView('roadmap');
+                        this.renderRoadmap();
+                    } else if (domainParam) {
+                        // Domain param but user not logged in
+                        // Wait for them to login, then show domain
+                        console.log("ℹ️ Domain param found but user not logged in - will show after login");
+                    }
+
+                } catch (e) {
+                    console.error("❌ App Init Error:", e);
+                }
+            },
+
+            bindEvents: function () {
+                // Auth Buttons
+                const loginBtn = document.getElementById('loginBtn');
+                const signupBtn = document.getElementById('signupBtn');
+
+                if (loginBtn) loginBtn.onclick = () => this.handleLogin();
+                if (signupBtn) signupBtn.onclick = () => this.handleSignup();
+
+                // Auth Toggles
+                const showSignup = document.getElementById('showSignup');
+                const showLogin = document.getElementById('showLogin');
+
+                if (showSignup) showSignup.onclick = () => {
+                    document.getElementById('login-view').classList.add('hidden');
+                    document.getElementById('signup-view').classList.remove('hidden');
+                };
+                if (showLogin) showLogin.onclick = () => {
+                    document.getElementById('signup-view').classList.add('hidden');
+                    document.getElementById('login-view').classList.remove('hidden');
+                };
+
+                // Chat
+                const sendBtn = document.getElementById('sendBtn');
+                const userInput = document.getElementById('userInput');
+
+                if (sendBtn) sendBtn.onclick = () => this.sendMessage();
+                if (userInput) userInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                };
+            },
+
+            /* --- QUIZ LOGIC (Inserted) --- */
+            startQuiz: function () {
+                const domain = state.domain || 'AI & Data';
+                // Lesson Index is 0-4
+                const levelIndex = state.currentLessonIndex !== undefined ? state.currentLessonIndex : 0;
+
+                // Get Questions
+                const questions = (QUIZ_DATA[domain] && QUIZ_DATA[domain][levelIndex])
+                    ? QUIZ_DATA[domain][levelIndex]
+                    : [];
+
+                if (questions.length === 0) {
+                    alert("No quiz available for this level yet. Skipping to completion.");
+                    this.completeLevel(3); // Auto-complete if no quiz
+                    return;
+                }
+
+                // Reset Quiz State
+                state.currentQuiz = {
+                    questions: questions,
+                    index: 0,
+                    score: 0
+                };
+
+                // Show Modal
+                document.getElementById('quiz-modal').classList.remove('hidden');
+                document.getElementById('quiz-container').classList.remove('hidden');
+                document.getElementById('quiz-results').classList.add('hidden');
+
+                this.renderQuestion();
+            },
+
+            renderQuestion: function () {
+                const qData = state.currentQuiz.questions[state.currentQuiz.index];
+                document.getElementById('quiz-question').textContent = `${state.currentQuiz.index + 1}. ${qData.q}`;
+
+                const optContainer = document.getElementById('quiz-options');
+                optContainer.innerHTML = '';
+
+                qData.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'lesson-btn'; // Reuse style
+                    btn.style.textAlign = 'left';
+                    btn.style.padding = '15px';
+                    btn.textContent = opt;
+                    btn.onclick = () => this.handleAnswer(idx);
+                    optContainer.appendChild(btn);
+                });
+            },
+
+            handleAnswer: function (selectedIdx) {
+                const qData = state.currentQuiz.questions[state.currentQuiz.index];
+                if (selectedIdx === qData.a) {
+                    state.currentQuiz.score++;
+                }
+
+                state.currentQuiz.index++;
+
+                if (state.currentQuiz.index < state.currentQuiz.questions.length) {
+                    this.renderQuestion();
+                } else {
+                    this.showQuizResults();
+                }
+            },
+
+            showQuizResults: function () {
+                const total = state.currentQuiz.questions.length;
+                const score = state.currentQuiz.score;
+                const percent = (score / total) * 100;
+
+                let stars = 1;
+                let feedback = "Good effort! Keep learning.";
+                if (percent >= 80) { stars = 3; feedback = "Excellent! You mastered this."; }
+                else if (percent >= 60) { stars = 2; feedback = "Great job! Almost perfect."; }
+
+                state.earnedStars = stars; // Temp store
+
+                document.getElementById('quiz-container').classList.add('hidden');
+                document.getElementById('quiz-results').classList.remove('hidden');
+
+                document.getElementById('quiz-score-title').textContent = `Score: ${score}/${total}`;
+                document.getElementById('quiz-stars-display').innerHTML = "★".repeat(stars);
+                document.getElementById('quiz-feedback').textContent = feedback;
+            },
+
+            finalizeLevel: function () {
+                document.getElementById('quiz-modal').classList.add('hidden');
+                this.completeLevel(state.earnedStars);
+                this.switchView('roadmap');
+            },
+
+
+
+            /**
+             * ============= AUTHENTICATION HANDLERS =============
+             * These handle user login/signup with Firebase integration
+             * All auth state is automatically saved to localStorage
+             */
+
+            handleLogin: async function () {
+                const email = document.getElementById('loginEmail').value.trim();
+                const pass = document.getElementById('loginPassword').value.trim();
+                const msg = document.getElementById('auth-msg');
+
+                if (!email || !pass) {
+                    msg.textContent = "Please fill in all fields";
+                    return;
+                }
+
+                msg.textContent = "Logging in...";
+
+                try {
+                    // Use auth service to login
+                    const user = await authService.login(email, pass);
+                    this.onAuthSuccess();
+                    msg.textContent = "";
+                } catch (e) {
+                    msg.textContent = e.message.replace("Firebase: ", "");
+                    console.error("Login error:", e);
+                }
+            },
+
+            handleSignup: async function () {
+                const email = document.getElementById('signupEmail').value.trim();
+                const pass = document.getElementById('signupPassword').value.trim();
+                const name = document.getElementById('signupName').value.trim();
+                const msg = document.getElementById('auth-msg');
+
+                if (!email || !pass || !name) {
+                    msg.textContent = "Please fill in all fields";
+                    return;
+                }
+
+                msg.textContent = "Creating account...";
+
+                try {
+                    // Use auth service to signup
+                    const user = await authService.signup(email, pass, name);
+                    this.onAuthSuccess();
+                    msg.textContent = "";
+                } catch (e) {
+                    msg.textContent = e.message.replace("Firebase: ", "");
+                    console.error("Signup error:", e);
+                }
+            },
+
+            /**
+             * Called after successful authentication
+             * Hides login overlay and loads the app
+             */
+            onAuthSuccess: function () {
+                // Get user data from auth service
+                const user = authService.getCurrentUser();
+                state.user = user;
+
+                if (user && user.displayName) {
+                    document.getElementById('nav-user-name').textContent = user.displayName;
+                }
+
+                // Hide Auth Overlay with animation
+                const overlay = document.getElementById('auth-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 500);
+
+                console.log("✅ Authentication successful, app loaded");
+            },
+
+            /**
+             * Logout user and clear session
+             */
+            logout: async function () {
+                try {
+                    await authService.logout();
+                } catch (e) {
+                    console.error("Logout error:", e);
+                }
+                // Clear state and force full page reload to show login
+                state.user = null;
+                window.location.reload();
+            },
+
+            /* --- NAVIGATION --- */
+            switchView: function (viewName) {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                const target = document.getElementById(`view-${viewName}`);
+                target.classList.remove('hidden');
+
+                if (viewName === 'roadmap') {
+                    this.renderRoadmap();
+                }
+
+                if (viewName === 'chat' && document.querySelectorAll('.message').length <= 1) {
+                    this.addMessage(`System: You are now discussing the ${state.domain} career path.`, 'ai', true);
+                }
+            },
+
+            renderRoadmap: function () {
+                const domain = state.domain || 'AI & Data';
+                const currentLevel = state.domainProgress[domain] || 1;
+                const starsMap = state.domainStars[domain] || {};
+
+                // 1. Reset all nodes
+                document.querySelectorAll('.level-node').forEach((node, index) => {
+                    const levelNum = index + 1;
+                    const starBox = document.getElementById(`stars-${levelNum}`);
+
+                    // Reset Classes
+                    node.className = 'level-node locked';
+                    node.onclick = null;
+                    if (starBox) starBox.innerHTML = '';
+
+                    // 2. Apply Interaction State
+                    if (levelNum < currentLevel) {
+                        // Completed
+                        node.classList.remove('locked');
+                        node.classList.add('completed');
+                        node.onclick = () => app.openLevel(levelNum); // Revisit?
+
+                        // Show Stars
+                        const s = starsMap[levelNum] || 0;
+                        if (starBox && s > 0) starBox.innerHTML = "★".repeat(s);
+
+                    } else if (levelNum === currentLevel) {
+                        // Active
+                        node.classList.remove('locked');
+                        node.classList.add('active');
+                        node.onclick = () => app.openLevel(levelNum);
+                    } else {
+                        // Locked (Default)
+                    }
+                });
+
+                // Update Progress Ring
+                const progress = ((currentLevel - 1) / 5) * 100;
+                const ring = document.getElementById('progress-ring');
+                if (ring) ring.style.setProperty('--progress', `${progress + 20}%`); // Visual offset
+                const txt = document.getElementById('progress-text');
+                if (txt) txt.textContent = `${Math.round(progress)}%`;
+            },
+
+            selectDomain: function (domainName) {
+                state.domain = domainName;
+                document.getElementById('roadmap-title').textContent = `${domainName} Roadmap`;
+                this.switchView('roadmap');
+            },
+
+            openLevel: function (level) {
+                const domain = state.domain || 'AI & Data';
+
+                // Get Module Data (Fallback to AI if domain missing)
+                const courseData = ALL_COURSES[domain] || ALL_COURSES['AI & Data'];
+                const moduleData = courseData[level - 1]; // Level 1 is index 0
+
+                if (moduleData) {
+                    // Update Modal Text
+                    document.getElementById('modal-title').textContent = `${domain} - Level ${level}`;
+                    document.getElementById('modal-desc').textContent = moduleData.module;
+
+                    // Update Checklist
+                    const checklist = document.getElementById('modal-checklist');
+                    if (checklist) {
+                        checklist.innerHTML = moduleData.lessons.map(l =>
+                            `<p>✅ ${l.title}</p>`
+                        ).join('');
+                    }
+                }
+
+                // Show Modal
+                document.getElementById('level-modal').classList.remove('hidden');
+                state.currentInteractionLevel = level;
+            },
+
+            completeLevel: function (starsOverride) {
+                const level = state.currentInteractionLevel;
+                const domain = state.domain || 'AI & Data';
+
+                // Use earned stars or default to 1
+                const stars = starsOverride || 1;
+
+                /* ----- SAVE STATE ----- */
+                // Save Stars
+                if (!state.domainStars[domain]) state.domainStars[domain] = {};
+
+                // Only overwrite if better or new
+                const oldStars = state.domainStars[domain][level] || 0;
+                if (stars > oldStars) {
+                    state.domainStars[domain][level] = stars;
+                }
+
+                // Advance Level if new
+                if (state.domainProgress[domain] === level) {
+                    state.domainProgress[domain] = Math.min(level + 1, 6);
+                }
+
+                /* ----- XP based on stars (only if new/improved) ----- */
+                // Logic simplified: just give XP for playing for now to encourage replay
+                const xpGain = stars * 50;
+                state.xp += xpGain;
+                document.getElementById('xp-display').textContent = state.xp;
+
+                /* ----- Re-render UI ----- */
+                this.renderRoadmap();
+
+                // Alert and Close
+                document.getElementById('level-modal').classList.add('hidden');
+                // alert(`Level Complete!\nEarned ${stars} Stars + ${xpGain} XP\nNext level unlocked.`);
+            },
+
+            /* --- CHAT LOGIC (Using REST API from index1.html) --- */
+            sendMessage: async function () {
+                const input = document.getElementById('userInput');
+                const text = input.value.trim();
+                if (!text) return;
+
+                // 1. Add User Message
+                this.addMessage(text, 'user');
+                input.value = '';
+
+                // 2. Show Typing
+                const typingId = this.addTypingIndicator();
+
+                try {
+                    // 3. Call Gemini REST API directly
+                    const reply = await this.callGeminiDirect(text);
+                    this.removeMessage(typingId);
+                    this.addMessage(reply, 'ai');
+                } catch (e) {
+                    this.removeMessage(typingId);
+                    console.error("API Error details:", e);
+
+                    // Show actual error for debugging
+                    const errorMsg = e.message || "Unknown API Error";
+                    this.addMessage(`⚠️ ${errorMsg}`, 'ai');
+
+                    // Optional: keep fallback if specific errors occur? 
+                    // For now, we want to see the error.
+                }
+            },
+
+            addMessage: function (text, type, hidden = false) {
+                if (hidden) return;
+                const container = document.getElementById('chat-messages');
+                const div = document.createElement('div');
+                div.className = `message ${type}`;
+                div.innerHTML = text;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+                return div.id = 'msg-' + Date.now();
+            },
+
+            addTypingIndicator: function () {
+                const id = 'typing-' + Date.now();
+                const container = document.getElementById('chat-messages');
+                const div = document.createElement('div');
+                div.id = id;
+                div.className = 'message ai typing-dots';
+                div.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+                return id;
+            },
+
+            removeMessage: function (id) {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            },
+
+            /* --- AI SERVICE (REST API) --- */
+            /* --- AI SERVICE (REST API) --- */
+            callGeminiDirect: async function (prompt) {
+                // User-requested exact API configuration
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.apiKey}`;
+
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                role: "user",
+                                parts: [{
+                                    text: `You are an AI career guidance assistant for the ${state.domain} domain. Help users choose suitable career paths based on their interests, skills, and experience. Keep responses clear, short, and practical.\n\nUser query: ${prompt}`
+                                }]
+                            }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429) throw new Error("Quota exceeded. Please try again later.");
+
+                    let errorDetails = response.statusText;
+                    try {
+                        const errorBody = await response.json();
+                        if (errorBody.error && errorBody.error.message) {
+                            errorDetails += ` - ${errorBody.error.message}`;
+                        }
+                    } catch (readError) {
+                        try {
+                            errorDetails += ` - ${await response.text()}`;
+                        } catch (e) { }
+                    }
+
+                    throw new Error(`API Error (${response.status}): ${errorDetails}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error("No valid response from AI.");
+                }
+
+                return data.candidates[0].content.parts[0].text;
+            },
+
+            /* --- SIMULATION FALLBACK --- */
+            getSimulationReply: function (text) {
+                const lower = text.toLowerCase();
+
+                if (lower.includes("this platform") || lower.includes("career quest") || lower.includes("app"))
+                    return "<strong>Career Quest</strong> is a gamified learning platform designed to take you from beginner to job-ready. Navigate the <strong>Roadmap</strong> to unlock levels and earn XP!";
+
+                if (lower.includes("course") || lower.includes("learn") || lower.includes("module"))
+                    return "You can access all learning modules directly from your <strong>Roadmap</strong>. Click on the numbered nodes (1, 2, 3...) to start a specific lesson level.";
+
+                if (lower.includes("xp") || lower.includes("score") || lower.includes("point"))
+                    return "XP (Experience Points) tracks your progress. You earn <strong>50 XP</strong> for every level you complete. Try to keep your streak alive!";
+
+                if (state.domain === 'AI & Data') {
+                    if (lower.includes("python")) return "<strong>Python</strong> is the #1 language for AI. Focus on libraries like <em>Pandas</em> for data and <em>PyTorch</em> for deep learning.";
+                    if (lower.includes("job") || lower.includes("role")) return "Common roles include <strong>Data Scientist</strong>, <strong>ML Engineer</strong>, and <strong>AI Researcher</strong>.";
+                }
+
+                if (lower.includes("hello") || lower.includes("hi")) return "Hello adventurer! Ready to continue your quest?";
+                return "That's an interesting question! To give you the best advice, could you clarify which specific skill or tool you're asking about?";
+            }
+        };
+
+        /**
+         * ============= START APPLICATION =============
+         * Wait for DOM to be ready, then initialize app
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("📄 DOM Content Loaded - Initializing app...");
+            app.init();
+        });
+
+        // Also initialize immediately in case it loads after DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
+    </script>
+</body>
+
+</html>

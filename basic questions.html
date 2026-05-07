@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Career Finder - Discover Your Path</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #6366f1;
+            /* Indigo */
+            --accent-hover: #4f46e5;
+            --success-color: #10b981;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Start Screen */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
+        }
+
+        /* Quiz Screen */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .question-card {
+            margin-bottom: 40px;
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .category-label {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
+        }
+
+        .option-btn.yes {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .option-btn.no {
+            border-left: 4px solid #ef4444;
+        }
+
+        .option-btn.maybe {
+            border-left: 4px solid #f59e0b;
+        }
+
+        /* Loading Screen */
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Result Screen */
+        .result-card {
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-domain {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .result-role {
+            font-size: 1.4rem;
+            color: white;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .skills-list {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        .skills-list h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #94a3b8;
+        }
+
+        .skills-list ul {
+            list-style: none;
+        }
+
+        .skills-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skills-list li:last-child {
+            border-bottom: none;
+        }
+
+        .skills-list li i {
+            color: var(--success-color);
+        }
+
+        .btn-restart {
+            background: transparent;
+            border: 2px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: 10px 30px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+        }
+
+        .btn-restart:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Screen 1: Start -->
+        <div id="start-screen" class="screen active">
+            <h1>AI Career Finder</h1>
+            <p>Discover your perfect tech career path. Our intelligent system analyzes your interests, skills, and
+                behavior to recommend the best role for you.</p>
+            <button class="btn-primary" onclick="app.startGame()">Start Game</button>
+        </div>
+
+        <!-- Screen 2: Quiz -->
+        <div id="quiz-screen" class="screen">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+
+            <div class="question-card">
+                <span class="category-label" id="q-category">General Interest</span>
+                <h2 class="question-text" id="q-text">Do you enjoy solving logical problems?</h2>
+            </div>
+
+            <div class="options-grid">
+                <button class="option-btn yes" onclick="app.answer(1)">
+                    <i class="fa-solid fa-check"></i> Yes
+                </button>
+                <button class="option-btn maybe" onclick="app.answer(0.5)">
+                    <i class="fa-solid fa-scale-balanced"></i> Sometimes
+                </button>
+                <button class="option-btn no" onclick="app.answer(0)">
+                    <i class="fa-solid fa-xmark"></i> No
+                </button>
+            </div>
+
+            <div class="navigation-controls"
+                style="margin-top: 20px; width: 100%; max-width: 400px; display: flex; justify-content: flex-start;">
+                <button id="btn-prev" class="btn-restart" onclick="app.prevQuestion()"
+                    style="font-size: 0.9rem; padding: 8px 20px; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); display: none;">
+                    <i class="fa-solid fa-arrow-left"></i> Previous
+                </button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Loading -->
+        <div id="loading-screen" class="screen">
+            <div class="loader"></div>
+            <h2>Analyzing your profile...</h2>
+            <p>Matching your skills with industry roles.</p>
+        </div>
+
+        <!-- Screen 4: Result -->
+        <div id="result-screen" class="screen">
+            <p style="color: #94a3b8; margin-bottom: 10px;">Based on your answers, your strongest match is:</p>
+            <h1 class="result-domain" id="res-domain">Artificial Intelligence</h1>
+            <h2 class="result-role" id="res-role">Machine Learning Engineer</h2>
+
+            <p id="res-desc">This career suits your interests in solving logical problems, analysing data, and your
+                technical preferences.</p>
+
+            <div class="skills-list">
+                <h3>Start with learning:</h3>
+                <ul id="res-skills">
+                    <!-- Dynamic Skills -->
+                </ul>
+            </div>
+
+            <button class="btn-primary" onclick="window.location.href='index.html'">Explore Roadmap</button>
+            <br>
+            <button class="btn-restart" onclick="app.restart()">Restart Quiz</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Questions tailored to distinguish: AI & Data vs Design vs Marketing
+        const questions = [
+            // 1. General Interest
+            { text: "Do you enjoy solving complex logical puzzles?", weights: { AI: 2, Design: 0.5, Marketing: 0 } },
+            { text: "Do you prefer working with visuals and colors over numbers?", weights: { Design: 2, Marketing: 1, AI: 0 } },
+            { text: "Are you interested in how brands grow and reach people?", weights: { Marketing: 2, Design: 1, AI: 0 } },
+            { text: "Do you like analyzing data to find hidden patterns?", weights: { AI: 2, Marketing: 1, Design: 0 } },
+            { text: "Do you enjoy sketching, drawing, or arranging layouts?", weights: { Design: 2, AI: 0, Marketing: 0.5 } },
+            { text: "Do you like understanding human psychology and influence?", weights: { Marketing: 2, Design: 1.5, AI: 0.5 } },
+            { text: "Are you curious about how machines learn and think?", weights: { AI: 2, Design: 0, Marketing: 0 } },
+            { text: "Do you care about the 'user experience' when using an app?", weights: { Design: 2, Marketing: 1, AI: 0.5 } },
+            { text: "Do you like writing persuasive text or stories?", weights: { Marketing: 2, Design: 0.5, AI: 0 } },
+            { text: "Do you enjoy automating boring tasks with code?", weights: { AI: 2, Marketing: 0.5, Design: 0 } },
+
+            // 2. Work Style
+            { text: "Do you prefer a role that requires strict logic and precision?", weights: { AI: 2, Design: 0, Marketing: 0 } },
+            { text: "Do you enjoy subjective work where 'beauty' matters?", weights: { Design: 2, Marketing: 1, AI: 0 } },
+            { text: "Do you like fast-paced environments and social trends?", weights: { Marketing: 2, Design: 1, AI: 0 } },
+            { text: "Are you comfortable with math and statistics?", weights: { AI: 2, Marketing: 0.5, Design: 0 } },
+            { text: "Do you enjoy receiving feedback on your creative work?", weights: { Design: 2, Marketing: 1, AI: 0 } },
+            { text: "Do you like planning strategies to achieve a goal?", weights: { Marketing: 2, AI: 1, Design: 0.5 } },
+            { text: "Do you prefer working with tools like Photoshop or Figma?", weights: { Design: 2, Marketing: 1, AI: 0 } },
+            { text: "Do you prefer working with tools like Python or Excel?", weights: { AI: 2, Marketing: 1, Design: 0 } },
+            { text: "Do you like analyzing social media metrics?", weights: { Marketing: 2, AI: 0.5, Design: 0.5 } },
+            { text: "Do you enjoy fixing broken things or debugging?", weights: { AI: 2, Design: 0, Marketing: 0 } },
+
+            // 3. Deep Dive
+            { text: "Would you rather design a website than code it?", weights: { Design: 2, AI: 0, Marketing: 0 } },
+            { text: "Would you rather code an algorithm than design its look?", weights: { AI: 2, Design: 0, Marketing: 0 } },
+            { text: "Would you rather sell a product than build it?", weights: { Marketing: 2, Design: 0.5, AI: 0 } },
+            { text: "Are you interested in Neural Networks and Chatbots?", weights: { AI: 2, Design: 0, Marketing: 0 } },
+            { text: "Are you interested in Typography and Color Theory?", weights: { Design: 2, Marketing: 0.5, AI: 0 } },
+            { text: "Are you interested in SEO and viral content?", weights: { Marketing: 2, Design: 0.5, AI: 0 } },
+            { text: "Do you like the idea of predicting the future using data?", weights: { AI: 2, Marketing: 1, Design: 0 } },
+            { text: "Do you like the idea of creating a visual identity for a brand?", weights: { Design: 2, Marketing: 1.5, AI: 0 } },
+            { text: "Do you like the idea of managing a community of users?", weights: { Marketing: 2, Design: 0.5, AI: 0 } }
+        ];
+
+        const app = {
+            currentQuestion: 0,
+            userAnswers: [],
+            // We still track basic scores for fallback, but main logic is AI
+            scores: { AI: 0, Design: 0, Marketing: 0 },
+
+            init: function () { },
+
+            startGame: function () {
+                this.currentQuestion = 0;
+                this.userAnswers = [];
+                this.scores = { AI: 0, Design: 0, Marketing: 0 };
+                document.getElementById('start-screen').classList.remove('active');
+                document.getElementById('quiz-screen').classList.add('active');
+                this.loadQuestion();
+            },
+
+            loadQuestion: function () {
+                const q = questions[this.currentQuestion];
+                document.getElementById('q-text').textContent = q.text;
+
+                // Progress
+                const progress = ((this.currentQuestion) / questions.length) * 100;
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+
+                // Auto Category Label
+                let cat = "General Interest";
+                if (this.currentQuestion > 9) cat = "Work Style & Preferences";
+                if (this.currentQuestion > 19) cat = "Specific Interests";
+                document.getElementById('q-category').textContent = cat;
+
+                // Show/Hide Previous Button
+                const prevBtn = document.getElementById('btn-prev');
+                if (this.currentQuestion > 0) {
+                    prevBtn.style.display = 'flex';
+                } else {
+                    prevBtn.style.display = 'none';
+                }
+            },
+
+            answer: function (multiplier) {
+                this.userAnswers[this.currentQuestion] = multiplier;
+                this.currentQuestion++;
+                if (this.currentQuestion < questions.length) {
+                    this.loadQuestion();
+                } else {
+                    this.finishGame();
+                }
+            },
+
+            prevQuestion: function () {
+                if (this.currentQuestion > 0) {
+                    this.currentQuestion--;
+                    this.loadQuestion();
+                }
+            },
+
+            finishGame: function () {
+                this.calculateScores(); // Keep keeping track locally just in case
+                document.getElementById('quiz-screen').classList.remove('active');
+                document.getElementById('loading-screen').classList.add('active');
+                this.analyzeWithAI();
+            },
+
+            calculateScores: function () {
+                this.scores = { AI: 0, Design: 0, Marketing: 0 };
+                for (let i = 0; i < this.userAnswers.length; i++) {
+                    const multiplier = this.userAnswers[i];
+                    const q = questions[i];
+                    if (multiplier === undefined) continue;
+                    for (const [key, value] of Object.entries(q.weights)) {
+                        if (this.scores[key] !== undefined) {
+                            this.scores[key] += value * multiplier;
+                        }
+                    }
+                }
+            },
+
+            analyzeWithAI: async function () {
+                const API_KEY = "AIzaSyB8wDt0tnYap2BvtQ8Ioe4uwVWwYzQguc0";
+
+                // Construct logic summary from answers
+                let summary = "User Context:\n";
+                questions.forEach((q, index) => {
+                    const ans = this.userAnswers[index];
+                    let ansText = "No";
+                    if (ans === 1) ansText = "Yes";
+                    if (ans === 0.5) ansText = "Sometimes";
+                    if (ans > 0) summary += `- ${q.text}: ${ansText}\n`;
+                });
+
+                // STRICT Prompt to map to the 3 available domains
+                const prompt = `You are a Career Advisor for a learning platform that ONLY offers 3 specific course tracks:
+                1. "AI & Data" (Includes Artificial Intelligence, Machine Learning, Data Science)
+                2. "Design" (Includes UI/UX, Visual Design, Typography)
+                3. "Marketing" (Includes Digital Marketing, SEO, Social Media)
+
+                Analyze the user's quiz answers below and recommend the SINGLE BEST matching track from the 3 options above.
+                
+                ${summary}
+
+                -- Logic Guide --
+                - High logic, math, coding, or data interest -> Recommend "AI & Data".
+                - High visual, creative, drawing, empathy interest -> Recommend "Design".
+                - High social, communication, strategy, psychology interest -> Recommend "Marketing".
+
+                Return the answer in strict JSON format:
+                {
+                    "domain": "One of ['AI & Data', 'Design', 'Marketing']",
+                    "role": "A specific job role (e.g., 'Machine Learning Engineer', 'UI/UX Designer', 'Growth Marketer')",
+                    "desc": "A short, encouraging explanation of why this specific track fits their personality and answers.",
+                    "skills": ["Skill 1", "Skill 2", "Skill 3"]
+                }`;
+
+                try {
+                    const response = await fetch(
+                        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + API_KEY,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                contents: [{
+                                    role: "user",
+                                    parts: [{ text: prompt }]
+                                }]
+                            })
+                        }
+                    );
+
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const result = JSON.parse(cleanText);
+
+                    this.showAIResults(result);
+
+                } catch (err) {
+                    console.error("AI Error, falling back to local scores", err);
+                    this.showResults();
+                }
+            },
+
+            showAIResults: function (result) {
+                document.getElementById('loading-screen').classList.remove('active');
+                document.getElementById('result-screen').classList.add('active');
+
+                const finalDomain = result.domain || "AI & Data";
+                document.getElementById('res-domain').textContent = finalDomain;
+                document.getElementById('res-role').textContent = result.role;
+                document.getElementById('res-desc').innerHTML = result.desc;
+
+                const skillsHtml = result.skills.map(skill => `<li><i class="fa-solid fa-check-circle"></i> ${skill}</li>`).join('');
+                document.getElementById('res-skills').innerHTML = skillsHtml;
+
+                // Update the "Explore Roadmap" button to select this domain in the main app
+                const exploreBtn = document.querySelector("#result-screen .btn-primary");
+                exploreBtn.onclick = function () {
+                    // Save domain to local storage or URL param so index.html picks it up
+                    // For now, just redirect to index.html with a simple strategy would be finding the dom element
+                    // But since we are navigating, we can rely on user manually clicking.
+                    // Or better:
+                    window.location.href = `index.html?domain=${encodeURIComponent(finalDomain)}`;
+                };
+            },
+
+            showResults: function () {
+                // Fallback Logic
+                document.getElementById('loading-screen').classList.remove('active');
+                document.getElementById('result-screen').classList.add('active');
+
+                let maxScore = -1;
+                let bestKey = 'AI';
+                for (const [key, value] of Object.entries(this.scores)) {
+                    if (value > maxScore) {
+                        maxScore = value;
+                        bestKey = key;
+                    }
+                }
+
+                const map = {
+                    'AI': { domain: 'AI & Data', role: 'Machine Learning Engineer', desc: 'You have a logical mind suited for the future of tech.' },
+                    'Design': { domain: 'Design', role: 'UI/UX Designer', desc: 'You have a creative eye and empathy for users.' },
+                    'Marketing': { domain: 'Marketing', role: 'Digital Marketer', desc: 'You understand people and growth strategies.' }
+                };
+
+                const res = map[bestKey];
+
+                document.getElementById('res-domain').textContent = res.domain;
+                document.getElementById('res-role').textContent = res.role;
+                document.getElementById('res-desc').innerHTML = res.desc;
+
+                document.getElementById('res-skills').innerHTML = "<li><i class='fa-solid fa-check-circle'></i> See Roadmap for details</li>";
+            },
+
+            restart: function () {
+                document.getElementById('result-screen').classList.remove('active');
+                document.getElementById('start-screen').classList.add('active');
+            }
+        };
+    </script>
+</body>
+
+</html>
